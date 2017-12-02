@@ -1,0 +1,74 @@
+<html>
+<body>
+<pre>
+<h1>µVision Build Log</h1>
+<h2>Tool Versions:</h2>
+IDE-Version: µVision V5.23.0.0
+Copyright (C) 2017 ARM Ltd and ARM Germany GmbH. All rights reserved.
+License Information: Tung Dang Thanh, Dang Thanh Tung, LIC=FYK12-9KV25-UHM8H-W0REW-L22WE-W0LHX
+ 
+Tool Versions:
+Toolchain:       MDK-ARM Plus  Version: 5.23
+Toolchain Path:  T:\Programs\Keil_v5\ARM\ARMCC\Bin
+C Compiler:      Armcc.exe V5.06 update 4 (build 422)
+Assembler:       Armasm.exe V5.06 update 4 (build 422)
+Linker/Locator:  ArmLink.exe V5.06 update 4 (build 422)
+Library Manager: ArmAr.exe V5.06 update 4 (build 422)
+Hex Converter:   FromElf.exe V5.06 update 4 (build 422)
+CPU DLL:         SARMCM3.DLL V5.23
+Dialog DLL:      DCM.DLL V1.15.0.0
+Target DLL:      STLink\ST-LINKIII-KEIL_SWO.dll V2.0.18.0
+Dialog DLL:      TCM.DLL V1.27.0.0
+ 
+<h2>Project:</h2>
+D:\STM32F4_BaseControl-master\MDK-ARM\STM32F4_Test_Encoder.uvprojx
+Project File Date:  12/01/2017
+
+<h2>Output:</h2>
+*** Using Compiler 'V5.06 update 4 (build 422)', folder: 'T:\Programs\Keil_v5\ARM\ARMCC\Bin'
+Build target 'STM32F4_Test_Encoder'
+compiling main.c...
+../Inc/PID.h(35): warning:  #1295-D: Deprecated declaration pid_get_error - give arg types
+  extern float pid_get_error();
+../Inc/PID.h(36): warning:  #1295-D: Deprecated declaration pid_reset - give arg types
+  extern void pid_reset();
+../Inc/PID.h(40): warning:  #1-D: last line of file ends without a newline
+  #endif /* WALLFOLLOW_PID_H_ */
+../Src/main.c(119): warning:  #167-D: argument of type "uint8_t *" is incompatible with parameter of type "const char *"
+    HAL_UART_Transmit_DMA(&huart2, log, strlen(log));
+../Src/main.c(166): warning:  #1035-D: single-precision operand implicitly converted to double-precision
+      f_Pulse_Target_Right =  (f_rwheel_omega_target*3250*4*0.02)/(2*pi);   //Tsample=0.02
+../Src/main.c(167): warning:  #1035-D: single-precision operand implicitly converted to double-precision
+      f_Pulse_Target_Left =  (f_lwheel_omega_target*3250*4*0.02)/(2*pi);   //Tsample=0.02
+../Src/main.c(205): warning:  #188-D: enumerated type mixed with another type
+          HAL_GPIO_WritePin (
+PIOE, 
+PIO_PIN_7 | 
+PIO_PIN_9,1);
+../Src/main.c(308): warning:  #167-D: argument of type "char *" is incompatible with parameter of type "uint8_t *"
+    uart_gets(Rx_data);
+../Src/main.c: 8 warnings, 0 errors
+linking...
+Program Size: Code=14844 RO-data=520 RW-data=204 ZI-data=1620  
+"STM32F4_Test_Encoder\STM32F4_Test_Encoder.axf" - 0 Error(s), 8 Warning(s).
+
+<h2>Software Packages used:</h2>
+
+Package Vendor: ARM
+                http://www.keil.com/pack/ARM.CMSIS.5.0.1.pack
+                ARM::CMSIS:CORE:5.0.1
+                CMSIS (Cortex Microcontroller Software Interface Standard)
+   * Component: CORE Version: 5.0.1
+
+<h2>Collection of Component include folders:</h2>
+  .\RTE\_STM32F4_Test_Encoder
+  T:\Programs\Keil_v5\ARM\PACK\ARM\CMSIS\5.0.1\CMSIS\Include
+  T:\Programs\Keil_v5\ARM\PACK\Keil\STM32F4xx_DFP\1.0.5\Device\Include
+
+<h2>Collection of Component Files used:</h2>
+
+   * Component: ARM::CMSIS:CORE:5.0.1
+Build Time Elapsed:  00:00:04
+</pre>
+</body>
+</html>
