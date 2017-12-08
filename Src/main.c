@@ -62,8 +62,11 @@ DMA_HandleTypeDef hdma_usart2_tx;
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
 volatile int32_t i16_Counter_Left = 0, i16_Counter_Right = 0;
-volatile int32_t i16_Counter_Left_Temp = 0, i16_Counter_Right_Temp = 0;
+volatile int32_t i16_Counter_Left_smooth = 0, i16_Counter_Right_smooth = 0;
 uint8_t ui8_BufLog[50];
+uint8_t idx_uart = 0;
+uint8_t write_idx = 0, read_idx = 0;
+uint16_t u16_avail_byte = 0;
 
 float f_Pulse_Target_Left = 0, f_Pulse_Target_Right = 0, f_Pulse_Target_temp;
 float f_Error_Left, f_Error_Right;
@@ -79,9 +82,9 @@ uint8_t count_reset = 0;
 char* cToken;
 int8_t idx_read_buf = 0;
 uint8_t idx = 0;
-char Rx_indx, Rx_data[2], Rx_Buffer[50], Transfer_cplt;
+char Rx_indx, Rx_data[2], Rx_Buffer[50], Rx_Buffer_uart[200], Transfer_cplt;
 
-float f_tangent_vel_target =0.4, f_angular_vel_target=0.2;  //wc and vc
+float f_tangent_vel_target =0, f_angular_vel_target=0;  //wc and vc
 float f_lwheel_omega_target =0, f_rwheel_omega_target=0;    //wl, wr
 float f_lwheel_vec_target =0, f_rwheel_vec_target=0;    //vl, vr
 float f_lwheel_omega_enc = 0, f_rwheel_omega_enc = 0;
@@ -159,8 +162,10 @@ void string_to_num()
 void to_motor_cmd ()
 {
 
-    f_rwheel_vec_target = (2*f_tangent_vel_target + f_angular_vel_target*f_length)/2;
-    f_lwheel_vec_target = (2*f_tangent_vel_target - f_angular_vel_target*f_length)/2;
+//    f_rwheel_vec_target = (2*f_tangent_vel_target + f_angular_vel_target*f_length)/2;
+//    f_lwheel_vec_target = (2*f_tangent_vel_target - f_angular_vel_target*f_length)/2;
+    f_rwheel_vec_target = (2*f_tangent_vel_target - f_angular_vel_target*f_length)/2;
+    f_lwheel_vec_target = (2*f_tangent_vel_target + f_angular_vel_target*f_length)/2;
     f_rwheel_omega_target = f_rwheel_vec_target/f_radius;
     f_lwheel_omega_target = f_lwheel_vec_target/f_radius;
     f_Pulse_Target_Right =  (f_rwheel_omega_target*3250*4*0.02)/(2*pi);   //Tsample=0.02
@@ -173,11 +178,70 @@ void encoder_feedback()
     f_lwheel_omega_enc = (i16_Counter_Left/(3250*4*0.02))*2*pi;  //Tsample=0.02s
     f_rwheel_vec_enc = f_rwheel_omega_enc*f_radius;
     f_lwheel_vec_enc = f_lwheel_omega_enc*f_radius;  
-    f_angular_vel_enc = (f_rwheel_vec_enc - f_lwheel_vec_enc)/f_length; 
+//    f_angular_vel_enc = (f_rwheel_vec_enc - f_lwheel_vec_enc)/f_length; 
+    f_angular_vel_enc = (f_lwheel_vec_enc - f_rwheel_vec_enc)/f_length; 
     f_tangent_vel_enc = (f_rwheel_vec_enc + f_lwheel_vec_enc)/2;   
     
-    sprintf((char*) ui8_BufLog,"[%f,%f]",f_tangent_vel_enc, f_angular_vel_enc);
-    UART_Log(ui8_BufLog);
+//    sprintf((char*) ui8_BufLog,"[%f,%f]",f_tangent_vel_enc, f_angular_vel_enc);
+//    UART_Log(ui8_BufLog);
+}
+
+//void uart_receive_data ()
+//{
+//    uint8_t i;
+//    if (Rx_indx==0) {for (i=0;i<50;i++) Rx_Buffer[i]=0;}   //clear Rx_Buffer before receiving new data 
+//    if (Rx_data[idx_uart]=='[')    
+//    {
+//        while (idx_uart<200) //if received data different from ascii 13 (enter)
+//        {
+//            Rx_Buffer[Rx_indx++]=Rx_data[idx_uart++];    //add data to Rx_Buffer            
+//        if (Rx_data[idx_uart]==']')             //if received data = 13
+//        {
+//            Rx_Buffer[Rx_indx]='E';
+//            Rx_indx=0;
+//            idx_uart++;
+//            Transfer_cplt=1;//transfer complete, data is ready to read
+//            string_to_num();
+//            //convert
+//            to_motor_cmd();     //de duoi phan set PWM
+//            break;
+//        }
+//        if(idx_uart == 200)
+//        {
+//            idx_uart = 0;
+//        }
+//        }
+//	 }   
+//}
+
+void uart_receive_data ()
+{
+    if (u16_avail_byte>0)
+    {
+    while (Rx_Buffer_uart[read_idx++] != ']')
+    {
+        if (Rx_Buffer_uart[read_idx] == '[')
+        {
+            idx = 0;
+            continue;
+        }
+        if (read_idx != write_idx)
+        {
+            Rx_Buffer[idx] = Rx_Buffer_uart[read_idx];
+            idx++;      //con tro cho mang buffer
+        }
+        if (read_idx == 200)
+        {
+            read_idx = 0;
+        }
+        if (u16_avail_byte)
+        {
+            u16_avail_byte--;
+        }
+    }
+    }
+    string_to_num();
+    to_motor_cmd();
 }
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
@@ -210,23 +274,27 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     }
     
     //filter
-//    i16_Counter_Left = i16_Counter_Left + (uint32_t)(0.9*(i16_Counter_Left_Temp-i16_Counter_Left));
-//    i16_Counter_Right = i16_Counter_Right + (uint32_t)(0.9*(i16_Counter_Right_Temp-i16_Counter_Right));
-//    i16_Counter_Left_Temp = i16_Counter_Left;
-//    i16_Counter_Right_Temp = i16_Counter_Right;
-    
+//    i16_Counter_Left_k_1 = i16_Counter_Left_k + (uint32_t)(0.9*(i16_Counter_Left-i16_Counter_Left_k)); 
+    i16_Counter_Left_smooth = i16_Counter_Left_smooth + (0.2*(i16_Counter_Left-i16_Counter_Left_smooth));
+    i16_Counter_Right_smooth = i16_Counter_Right_smooth + (0.2*(i16_Counter_Right-i16_Counter_Right_smooth));  
+    i16_Counter_Left = i16_Counter_Left_smooth;        
+    i16_Counter_Right = i16_Counter_Right_smooth;    
+    //end filter
+    //uart
+    uart_receive_data();
+    //end uart
     f_Error_Left = f_Pulse_Target_Left - (float)i16_Counter_Left;
     f_PIDResult_Left = pid_process(&PID_ParaMotor_Left, f_Error_Left);
     
     f_Error_Right = f_Pulse_Target_Right - (float)i16_Counter_Right;
     f_PIDResult_Right = pid_process(&PID_ParaMotor_Right, f_Error_Right);
 
-    f_PIDScale_Left = (f_PIDResult_Left + 100)/2;
-    f_PIDScale_Right = (f_PIDResult_Right + 100)/2;   
+//    f_PIDScale_Left = (f_PIDResult_Left + 100)/2;
+//    f_PIDScale_Right = (f_PIDResult_Right + 100)/2;   
 
 
     __HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_1, (int8_t)f_PIDScale_Left);
-    __HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_2, (int8_t)f_PIDScale_Right);  
+    __HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_2, (int8_t)f_PIDScale_Left);  
 
     //feedback
     encoder_feedback();    
@@ -241,26 +309,15 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
-    uint8_t i;
 	if(huart->Instance==huart2.Instance)
 	{
-      {
-        if (Rx_indx==0) {for (i=0;i<50;i++) Rx_Buffer[i]=0;}   //clear Rx_Buffer before receiving new data 
-
-        if (Rx_data[0]!=']') //if received data different from ascii 13 (enter)
-            {
-            Rx_Buffer[Rx_indx++]=Rx_data[0];    //add data to Rx_Buffer
-            }
-        else            //if received data = 13
-            {
-            Rx_Buffer[Rx_indx]='E';
-            Rx_indx=0;
-            Transfer_cplt=1;//transfer complete, data is ready to read
-            string_to_num();
-            //convert
-            to_motor_cmd();     //de duoi phan set PWM
-            }
-	  }
+        Rx_Buffer_uart[write_idx] = Rx_data[0];
+        write_idx++;
+        u16_avail_byte++;
+        if (write_idx == 200)
+        {
+            write_idx = 0;
+        }
     }
 }
 

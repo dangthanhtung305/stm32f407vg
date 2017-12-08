@@ -34,22 +34,22 @@ compiling main.c...
   extern void pid_reset();
 ../Inc/PID.h(40): warning:  #1-D: last line of file ends without a newline
   #endif /* WALLFOLLOW_PID_H_ */
-../Src/main.c(119): warning:  #167-D: argument of type "uint8_t *" is incompatible with parameter of type "const char *"
+../Src/main.c(122): warning:  #167-D: argument of type "uint8_t *" is incompatible with parameter of type "const char *"
     HAL_UART_Transmit_DMA(&huart2, log, strlen(log));
-../Src/main.c(166): warning:  #1035-D: single-precision operand implicitly converted to double-precision
+../Src/main.c(171): warning:  #1035-D: single-precision operand implicitly converted to double-precision
       f_Pulse_Target_Right =  (f_rwheel_omega_target*3250*4*0.02)/(2*pi);   //Tsample=0.02
-../Src/main.c(167): warning:  #1035-D: single-precision operand implicitly converted to double-precision
+../Src/main.c(172): warning:  #1035-D: single-precision operand implicitly converted to double-precision
       f_Pulse_Target_Left =  (f_lwheel_omega_target*3250*4*0.02)/(2*pi);   //Tsample=0.02
-../Src/main.c(205): warning:  #188-D: enumerated type mixed with another type
+../Src/main.c(269): warning:  #188-D: enumerated type mixed with another type
           HAL_GPIO_WritePin (
 PIOE, 
 PIO_PIN_7 | 
 PIO_PIN_9,1);
-../Src/main.c(308): warning:  #167-D: argument of type "char *" is incompatible with parameter of type "uint8_t *"
+../Src/main.c(365): warning:  #167-D: argument of type "char *" is incompatible with parameter of type "uint8_t *"
     uart_gets(Rx_data);
 ../Src/main.c: 8 warnings, 0 errors
 linking...
-Program Size: Code=14844 RO-data=520 RW-data=204 ZI-data=1620  
+Program Size: Code=12352 RO-data=520 RW-data=208 ZI-data=1776  
 "STM32F4_Test_Encoder\STM32F4_Test_Encoder.axf" - 0 Error(s), 8 Warning(s).
 
 <h2>Software Packages used:</h2>
